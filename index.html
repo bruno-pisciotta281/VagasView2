@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisa de Vagas</title>
+    <style>
+        body {
+            background-color: #fff;
+        }
+
+        #job-list li {
+            background-color: #fff;
+            border-radius: 15px;
+            padding: 10px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #job-list li:hover {
+            background-color: #00A960;
+            color: #000;
+        }
+
+        #job-details {
+            display: none;
+            border-radius: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+            background-color: #fff;
+        }
+        
+        #filters label,
+#filters input {
+    margin-bottom: 10px;
+    
+    
+}
+
+#filters input[type="text"],
+#filters select,
+#filters button {
+    border: none; /* Remove a borda dos campos de preenchimento dentro do elemento com id="filters" */
+}
+
+#filters button {
+    padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            box-shadow: none;
+            margin-right: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            background-color: #00A960;
+            color: #474747;
+            font-weight: bold;
+            margin-bottom: 10px;
+            transition: background-color 0.3s, color 0.3s; 
+            
+    
+}
+
+#filters button:hover {
+    background-color: #474747; /* Cor de fundo no hover */
+    color: #fff; /* Cor do texto no hover */
+}
+    
+#back-button {
+    padding: 10px 20px;
+    border: 1px solid #474747; /* Cor da borda */
+    border-radius: 5px; /* Arredondamento de 5px */
+    cursor: pointer;
+    text-decoration: none;
+    color: #474747; /* Cor do texto */
+    box-shadow: none;
+    background-color: transparent; /* Fundo transparente */
+}
+
+#back-button:hover {
+    background-color: #474747; /* Cor de fundo no hover */
+    color: #fff; /* Cor do texto no hover */
+    box-shadow: none;
+    
+        }
+
+        #filters {
+            margin-bottom: 20px;
+        }
+
+        input,
+        select,
+        button {
+            margin-right: 10px;
+        }
+        
+        
+
+        #job-publication {
+            font-size: 14px;
+            margin-top: 10px;
+            color: #555;
+        }
+        
+        #job-url,
+#apply-button {
+    padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            box-shadow: none;
+            margin-right: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            background-color: #474747;
+            color: #fff;
+            font-weight: bold;
+            margin-bottom: 10px;
+            transition: background-color 0.3s, color 0.3s; 
+}
+
+#job-url:hover,
+#apply-button:hover {
+    background-color: #00A960;
+    color: #474747;
+    font-weight: bold;
+    
+}
+        
+    </style>
+</head>
+
+<body>
+    <div id="filters">
+        <label for="title">Título / Área:</label>
+        <input type="text" id="title" placeholder="Exemplo: Engenheiro de Processos ou Marketing">
+        
+        <label for="location">Cidade ou Estado:</label>
+        <input type="text" id="location" placeholder="Exemplo: São Paulo">
+
+        <br>
+
+        <button onclick="filterJobs()">Pesquisar</button>
+    </div>
+
+    <ul style="list-style: none; padding: 0;" id="job-list"></ul>
+
+    <div id="job-details" style="display: none;">
+        <h2 id="job-title"></h2>
+        <p id="job-description"></p>
+        <p id="job-location"></p>
+        <p id="job-contract"></p>
+        <p id="job-requirements"></p>
+        <p id="job-publication"></p>
+
+        <a href="#" id="job-url" data-id="">Candidatar Agora</a>
+        <button id="back-button">Voltar</button>
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const jobList = document.getElementById("job-list");
+        const jobDetails = document.getElementById("job-details");
+        let data;
+
+        function loadJobs() {
+            fetch("https://novotemporh.selecty.com.br/jobfeed/index.php?token=68d44a-11e5-1cff68-ad54-163f244a87781&portal=novotemporh")
+                .then(response => response.json())
+                .then(jobData => {
+                    data = jobData;
+                    data.sort((a, b) => new Date(b.publicationDate) - new Date(a.publicationDate));
+
+                    data.forEach(job => {
+                        const li = document.createElement("li");
+
+                        const formattedPublicationDate = formatDate(job.publicationDate);
+                        const additionalInfo = `${job.location} | ${job.contractType}, ${formattedPublicationDate}`;
+
+                        li.innerHTML = `<strong>${job.title}</strong><br>${additionalInfo}`;
+
+                        li.addEventListener("click", () => showJobDetails(job));
+
+                        li.style.margin = "10px 0";
+                        li.style.cursor = "pointer";
+                        li.style.border = "1px solid #ccc";
+                        li.style.padding = "10px";
+
+                        jobList.appendChild(li);
+                    });
+                })
+                .catch(error => {
+                    console.error("Erro ao carregar vagas: " + error);
+                });
+        }
+
+        function showJobDetails(job) {
+            document.getElementById("job-title").innerText = job.title;
+
+            var linhasDescricao = job.description.split(/[.;]/);
+            var desc = linhasDescricao.join('.<br><br>');
+            document.getElementById("job-description").innerHTML = desc;
+
+            document.getElementById("job-location").innerHTML = `<b>Local:</b> ${job.location}`;
+            document.getElementById("job-contract").innerHTML = `<b>Tipo de Contrato:</b> ${job.contractType}`;
+
+            var linhasRequisitos = job.requirements.split(/[.;]/).map(item => item.trim());
+            var requisitos = linhasRequisitos.join('.<br><br>');
+            document.getElementById("job-requirements").innerHTML = `<b>Requisitos:</b> ${requisitos}`;
+
+            const data = new Date(job.publicationDate);
+            const dia = String(data.getDate()).padStart(2, '0');
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const ano = data.getFullYear();
+            const dataFormatada = `${dia}/${mes}/${ano}`;
+            document.getElementById("job-publication").innerHTML = `<b>Data de Publicação:</b> ${dataFormatada}`;
+
+            // Atualiza o link para a página da vaga no botão "Candidatar Agora"
+            const jobUrl = `https://novotemporh.selecty.com.br/vaga/${job.id}/vaga-para-${job.title.toLowerCase().replace(/ /g, '-')}`;
+            document.getElementById("job-url").setAttribute("href", jobUrl);
+            document.getElementById("job-url").setAttribute("data-id", job.id);
+
+            jobList.style.display = "none";
+            jobDetails.style.display = "block";
+
+            const vagaID = job.id;
+            const newUrl = `${window.location.href.split('?')[0]}?id=${vagaID}`;
+            history.pushState({ id: vagaID }, "", newUrl);
+        }
+
+        function goBack() {
+            jobList.style.display = "block";
+            jobDetails.style.display = "none";
+            history.pushState(null, "", window.location.href.split('?')[0]);
+        }
+
+        function removeAccentsAndTypos(str) {
+            return str
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^\w\s]/gi, "");
+        }
+
+        function filterJobs() {
+            const titleFilter = removeAccentsAndTypos(document.getElementById("title").value.toLowerCase());
+            const locationFilter = removeAccentsAndTypos(document.getElementById("location").value.toLowerCase());
+
+            const filteredJobs = data.filter(job => {
+                const titleMatch = removeAccentsAndTypos(job.title.toLowerCase()).includes(titleFilter);
+                const locationMatch = removeAccentsAndTypos(job.location.toLowerCase()).includes(locationFilter);
+
+                return titleMatch && locationMatch;
+            });
+
+            displayJobs(filteredJobs);
+        }
+
+        function displayJobs(jobs) {
+            jobList.innerHTML = "";
+
+            jobs.forEach(job => {
+                const li = document.createElement("li");
+
+                li.innerHTML = `<strong>${job.title}</strong><br>${job.location} | ${job.contractType}, ${formatDate(job.publicationDate)}`;
+
+                li.addEventListener("click", () => showJobDetails(job));
+
+                li.style.margin = "10px 0";
+                li.style.cursor = "pointer";
+                li.style.border = "1px solid #ccc";
+                li.style.padding = "10px";
+
+                jobList.appendChild(li);
+            });
+        }
+
+        function formatDate(dateString) {
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            const formattedDate = new Date(dateString).toLocaleDateString('pt-BR', options);
+            return formattedDate;
+        }
+
+        function shareJob() {
+            const jobId = document.getElementById("job-url").getAttribute("data-id");
+            const shareUrl = `https://tramassoidh.com.br/vagas-abertas/?id=${jobId}`;
+
+            document.getElementById("whatsapp-button").addEventListener("click", function () {
+                window.open(`https://wa.me/?text=${encodeURIComponent("Confira esta vaga:\n" + shareUrl)}`);
+            });
+
+            document.getElementById("linkedin-button").addEventListener("click", function () {
+                window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(shareUrl)}&title=&summary=${encodeURIComponent("Confira esta vaga:\n" + shareUrl)}`);
+            });
+
+            document.getElementById("instagram-button").addEventListener("click", function () {
+                window.open(`https://www.instagram.com/?url=${encodeURIComponent(shareUrl)}&caption=${encodeURIComponent("Confira esta vaga:\n" + shareUrl)}`);
+            });
+
+            document.getElementById("email-button").addEventListener("click", function () {
+                const subject = encodeURIComponent("Confira esta vaga");
+                const body = encodeURIComponent(`Confira esta vaga:\n${shareUrl}`);
+                window.location.href = `mailto:?subject=${subject}&body=${body}`;
+            });
+        }
+
+        document.getElementById("filters").addEventListener("click", filterJobs);
+        document.getElementById("back-button").addEventListener("click", goBack);
+
+        loadJobs();
+
+        window.onpopstate = function (event) {
+            if (event.state && event.state.id) {
+                const vagaID = event.state.id;
+                const vagaSelecionada = data.find(job => job.id === parseInt(vagaID, 10));
+                if (vagaSelecionada) {
+                    showJobDetails(vagaSelecionada);
+                }
+            } else {
+                jobList.style.display = "block";
+                jobDetails.style.display = "none";
+            }
+        };
+    });
+    </script>
+</body>
+</html>

@@ -24,6 +24,7 @@
             margin: 10px 0;
             cursor: pointer;
             transition: background-color 0.3s;
+            padding-left: 2%;
         }
         #job-list li:hover {
             background-color: #00A960;
@@ -36,7 +37,9 @@
             padding: 20px;
             margin-top: 20px;
             background-color: #fff;
+            padding: 2%;
         }
+
         #filters label,
         #filters input {
             margin-bottom: 10px;
@@ -160,7 +163,7 @@
             let data;
             let currentPage = 1;
             const itemsPerPage = 10; // Número de itens por página
-            const maxPageButtons = 5; // Número máximo de botões de página a serem exibidos
+            const maxPageButtons = 3; // Número máximo de botões de página a serem exibidos
             let startPage = 1; // Página inicial do conjunto atual de botões de página
 
             function loadJobs() {
@@ -195,50 +198,103 @@
             }
 
             function setupPagination(jobs) {
-                paginationControls.innerHTML = "";
-                const pageCount = Math.ceil(jobs.length / itemsPerPage);
+    paginationControls.innerHTML = "";
+    const pageCount = Math.ceil(jobs.length / itemsPerPage);
 
-                if (startPage > pageCount - maxPageButtons + 1) {
-                    startPage = Math.max(pageCount - maxPageButtons + 1, 1);
-                }
+    if (startPage > pageCount - maxPageButtons + 1) {
+        startPage = Math.max(pageCount - maxPageButtons + 1, 1);
+    }
 
-                const endPage = Math.min(startPage + maxPageButtons - 1, pageCount);
+    const endPage = Math.min(startPage + maxPageButtons - 1, pageCount);
 
-                if (startPage > 1) {
-                    const prevButton = document.createElement("button");
-                    prevButton.innerHTML = "🡸";
-                    prevButton.addEventListener("click", () => {
-                        startPage -= maxPageButtons;
-                        setupPagination(jobs);
-                    });
-                    paginationControls.appendChild(prevButton);
-                }
-
-                for (let i = startPage; i <= endPage; i++) {
-                    const button = document.createElement("button");
-                    button.innerText = i;
-                    button.classList.add("page-button");
-                    if (i === currentPage) {
-                        button.classList.add("active");
-                    }
-                    button.addEventListener("click", () => {
-                        currentPage = i;
-                        displayJobs(jobs, currentPage);
-                        updateActivePageButton();
-                    });
-                    paginationControls.appendChild(button);
-                }
-
-                if (endPage < pageCount) {
-                    const nextButton = document.createElement("button");
-                    nextButton.innerHTML = "🡺";
-                    nextButton.addEventListener("click", () => {
-                        startPage += maxPageButtons;
-                        setupPagination(jobs);
-                    });
-                    paginationControls.appendChild(nextButton);
-                }
+    // Adiciona seta esquerda na extremidade esquerda
+    if (currentPage > 1) {
+        const prevButton = document.createElement("button");
+        prevButton.innerHTML = "🡸"; // left arrow
+        prevButton.addEventListener("click", () => {
+            currentPage -= 1;
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage < startPage) {
+                startPage -= maxPageButtons;
+                if (startPage < 1) startPage = 1;
             }
+            displayJobs(jobs, currentPage);
+            setupPagination(jobs);
+        });
+        paginationControls.appendChild(prevButton);
+    }
+
+    if (startPage > 1) {
+        const firstButton = document.createElement("button");
+        firstButton.innerText = "1";
+        firstButton.addEventListener("click", () => {
+            currentPage = 1;
+            startPage = 1;
+            displayJobs(jobs, currentPage);
+            setupPagination(jobs);
+        });
+        paginationControls.appendChild(firstButton);
+
+        if (startPage > 2) {
+            paginationControls.appendChild(document.createTextNode("..."));
+        }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        createPageButton(i);
+    }
+
+    if (endPage < pageCount) {
+        if (endPage < pageCount - 1) {
+            paginationControls.appendChild(document.createTextNode("..."));
+        }
+        const lastButton = document.createElement("button");
+        lastButton.innerText = pageCount;
+        lastButton.addEventListener("click", () => {
+            currentPage = pageCount;
+            startPage = pageCount - maxPageButtons + 1;
+            if (startPage < 1) startPage = 1;
+            displayJobs(jobs, currentPage);
+            setupPagination(jobs);
+        });
+        paginationControls.appendChild(lastButton);
+    }
+
+    // Adiciona seta direita na extremidade direita
+    if (currentPage < pageCount) {
+        const nextButton = document.createElement("button");
+        nextButton.innerHTML = "🡺"; // right arrow
+        nextButton.addEventListener("click", () => {
+            currentPage += 1;
+            if (currentPage > pageCount) currentPage = pageCount;
+            if (currentPage > endPage) {
+                startPage += maxPageButtons;
+                setupPagination(jobs);
+            } else {
+                displayJobs(jobs, currentPage);
+                updateActivePageButton();
+            }
+        });
+        paginationControls.appendChild(nextButton);
+    }
+}
+
+function createPageButton(pageNumber) {
+    const button = document.createElement("button");
+    button.innerText = pageNumber;
+    button.classList.add("page-button");
+    if (pageNumber === currentPage) {
+        button.classList.add("active");
+    }
+    button.addEventListener("click", () => {
+        currentPage = pageNumber;
+        displayJobs(data, currentPage);
+        updateActivePageButton();
+    });
+    paginationControls.appendChild(button);
+}
+
+
 
             function updateActivePageButton() {
                 const buttons = document.querySelectorAll(".page-button");

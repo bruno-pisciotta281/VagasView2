@@ -4,13 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-
     <title>Pesquisa de Vagas</title>
     <style>
         body {
@@ -39,12 +36,12 @@
             background-color: #fff;
             padding: 2%;
         }
-
         #filters label,
         #filters input {
             margin-bottom: 10px;
         }
         #filters input[type="text"],
+        #filters input[type="number"],
         #filters select,
         #filters button {
             border: none;
@@ -87,9 +84,7 @@
         #filters {
             margin-bottom: 20px;
         }
-        input,
-        select,
-        button {
+        input, select, button, label {
             margin-right: 10px;
         }
         #job-publication {
@@ -123,13 +118,31 @@
             margin: 20px 0;
             text-align: center;
         }
-        .pagination button {
+        .pagination button,
+        .pagination span {
             margin: 0 5px;
             padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            color: #333;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
         }
-        .pagination button.active {
+        .pagination button.active,
+        .pagination span.active {
             background-color: #00A960;
             color: #fff;
+        }
+        .pagination button:hover {
+            background-color: #00A960;
+            color: #fff;
+        }
+        #no-results {
+            text-align: center;
+            font-size: 18px;
+            color: #555;
+            display: none;
         }
     </style>
 </head>
@@ -140,11 +153,18 @@
         <input type="text" id="title" placeholder="Exemplo: Engenheiro de Processos ou Marketing">
         <label for="location">Cidade ou Estado:</label>
         <input type="text" id="location" placeholder="Exemplo: São Paulo">
+        <label for="id">ID da Vaga:</label>
+        <input type="number" id="id" placeholder="Exemplo: 18108">
         <br>
         <button onclick="filterJobs()">Pesquisar</button>
+        <button onclick="clearFilters()">Limpar</button>
     </div>
+    
+    <hr>
+    
+    <div id="no-results">Nenhuma vaga encontrada.</div>
     <ul style="list-style: none; padding: 0;" id="job-list"></ul>
-    <div id="job-details" style="display: none;">
+    <div id="job-details">
         <h2 id="job-title"></h2>
         <p id="job-description"></p>
         <p id="job-location"></p>
@@ -159,18 +179,20 @@
         document.addEventListener("DOMContentLoaded", function () {
             const jobList = document.getElementById("job-list");
             const jobDetails = document.getElementById("job-details");
+            const noResults = document.getElementById("no-results");
             const paginationControls = document.getElementById("pagination-controls");
-            let data;
+            let data = [];
+            let filteredJobs = [];
             let currentPage = 1;
             const itemsPerPage = 10; // Número de itens por página
-            const maxPageButtons = 3; // Número máximo de botões de página a serem exibidos
-            let startPage = 1; // Página inicial do conjunto atual de botões de página
+            const maxPageButtons = 5; // Número máximo de botões de página a serem exibidos
 
             function loadJobs() {
                 fetch("https://novotemporh.selecty.com.br/jobfeed/index.php?token=68d44a-11e5-1cff68-ad54-163f244a87781&portal=novotemporh")
                     .then(response => response.json())
                     .then(jobData => {
                         data = jobData;
+                        filteredJobs = data; // Inicialize filteredJobs com todos os dados
                         data.sort((a, b) => new Date(b.publicationDate) - new Date(a.publicationDate));
                         displayJobs(data, currentPage);
                         setupPagination(data);
@@ -186,11 +208,18 @@
                 const endIndex = startIndex + itemsPerPage;
                 const jobsToShow = jobs.slice(startIndex, endIndex);
 
+                if (jobsToShow.length === 0) {
+                    noResults.style.display = "block";
+                    paginationControls.style.display = "none";
+                } else {
+                    noResults.style.display = "none";
+                    paginationControls.style.display = "block";
+                }
+
                 jobsToShow.forEach(job => {
                     const li = document.createElement("li");
                     const formattedPublicationDate = formatDate(job.publicationDate);
-                    const additionalInfo = `${job.location} | ${job.contractType}, ${formattedPublicationDate}`;
-
+                    const additionalInfo = `PS: ${job.id} | ${job.location} | ${job.contractType} | ${formattedPublicationDate}`;
                     li.innerHTML = `<strong>${job.title}</strong><br>${additionalInfo}`;
                     li.addEventListener("click", () => showJobDetails(job));
                     jobList.appendChild(li);
@@ -198,112 +227,49 @@
             }
 
             function setupPagination(jobs) {
-    paginationControls.innerHTML = "";
-    const pageCount = Math.ceil(jobs.length / itemsPerPage);
+                paginationControls.innerHTML = "";
+                const pageCount = Math.ceil(jobs.length / itemsPerPage);
 
-    if (startPage > pageCount - maxPageButtons + 1) {
-        startPage = Math.max(pageCount - maxPageButtons + 1, 1);
-    }
+                if (pageCount <= 1) return; // Se houver apenas uma página, não exiba a paginação
 
-    const endPage = Math.min(startPage + maxPageButtons - 1, pageCount);
+                if (currentPage > 1) {
+                    const firstButton = createPaginationButton("Primeira", 1);
+                    paginationControls.appendChild(firstButton);
 
-    // Adiciona seta esquerda na extremidade esquerda
-    if (currentPage > 1) {
-        const prevButton = document.createElement("button");
-        prevButton.innerHTML = "🡸"; // left arrow
-        prevButton.addEventListener("click", () => {
-            currentPage -= 1;
-            if (currentPage < 1) currentPage = 1;
-            if (currentPage < startPage) {
-                startPage -= maxPageButtons;
-                if (startPage < 1) startPage = 1;
+                    const prevButton = createPaginationButton("🡸", currentPage - 1);
+                    paginationControls.appendChild(prevButton);
+                }
+
+                const startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
+                const endPage = Math.min(pageCount, startPage + maxPageButtons - 1);
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageButton = createPaginationButton(i, i);
+                    paginationControls.appendChild(pageButton);
+                }
+
+                if (endPage < pageCount) {
+                    const nextButton = createPaginationButton("🡺", currentPage + 1);
+                    paginationControls.appendChild(nextButton);
+
+                    const lastButton = createPaginationButton("Última", pageCount);
+                    paginationControls.appendChild(lastButton);
+                }
             }
-            displayJobs(jobs, currentPage);
-            setupPagination(jobs);
-        });
-        paginationControls.appendChild(prevButton);
-    }
 
-    if (startPage > 1) {
-        const firstButton = document.createElement("button");
-        firstButton.innerText = "1";
-        firstButton.addEventListener("click", () => {
-            currentPage = 1;
-            startPage = 1;
-            displayJobs(jobs, currentPage);
-            setupPagination(jobs);
-        });
-        paginationControls.appendChild(firstButton);
-
-        if (startPage > 2) {
-            paginationControls.appendChild(document.createTextNode("..."));
-        }
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-        createPageButton(i);
-    }
-
-    if (endPage < pageCount) {
-        if (endPage < pageCount - 1) {
-            paginationControls.appendChild(document.createTextNode("..."));
-        }
-        const lastButton = document.createElement("button");
-        lastButton.innerText = pageCount;
-        lastButton.addEventListener("click", () => {
-            currentPage = pageCount;
-            startPage = pageCount - maxPageButtons + 1;
-            if (startPage < 1) startPage = 1;
-            displayJobs(jobs, currentPage);
-            setupPagination(jobs);
-        });
-        paginationControls.appendChild(lastButton);
-    }
-
-    // Adiciona seta direita na extremidade direita
-    if (currentPage < pageCount) {
-        const nextButton = document.createElement("button");
-        nextButton.innerHTML = "🡺"; // right arrow
-        nextButton.addEventListener("click", () => {
-            currentPage += 1;
-            if (currentPage > pageCount) currentPage = pageCount;
-            if (currentPage > endPage) {
-                startPage += maxPageButtons;
-                setupPagination(jobs);
-            } else {
-                displayJobs(jobs, currentPage);
-                updateActivePageButton();
-            }
-        });
-        paginationControls.appendChild(nextButton);
-    }
-}
-
-function createPageButton(pageNumber) {
-    const button = document.createElement("button");
-    button.innerText = pageNumber;
-    button.classList.add("page-button");
-    if (pageNumber === currentPage) {
-        button.classList.add("active");
-    }
-    button.addEventListener("click", () => {
-        currentPage = pageNumber;
-        displayJobs(data, currentPage);
-        updateActivePageButton();
-    });
-    paginationControls.appendChild(button);
-}
-
-
-
-            function updateActivePageButton() {
-                const buttons = document.querySelectorAll(".page-button");
-                buttons.forEach(button => {
-                    button.classList.remove("active");
-                    if (parseInt(button.innerText) === currentPage) {
-                        button.classList.add("active");
-                    }
+            function createPaginationButton(text, page) {
+                const button = document.createElement("button");
+                button.innerText = text;
+                button.className = "pagination-button";
+                if (page === currentPage) {
+                    button.classList.add("active");
+                }
+                button.addEventListener("click", () => {
+                    currentPage = page;
+                    displayJobs(filteredJobs, currentPage);
+                    setupPagination(filteredJobs);
                 });
+                return button;
             }
 
             function showJobDetails(job) {
@@ -319,24 +285,40 @@ function createPageButton(pageNumber) {
                 history.pushState({ id: job.id }, "", `${window.location.href.split('?')[0]}?id=${job.id}`);
             }
 
-            function goBack() {
-                jobList.style.display = "block";
-                jobDetails.style.display = "none";
-                history.pushState(null, "", window.location.href.split('?')[0]);
-            }
-
             function filterJobs() {
                 const titleFilter = document.getElementById("title").value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 const locationFilter = document.getElementById("location").value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                const idFilter = document.getElementById("id").value;
 
-                const filteredJobs = data.filter(job => {
-                    const titleMatch = job.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(titleFilter);
-                    const locationMatch = job.location.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(locationFilter);
-                    return titleMatch && locationMatch;
+                filteredJobs = data.filter(job => {
+                    let titleMatch = true;
+                    let locationMatch = true;
+                    let idMatch = true;
+
+                    if (titleFilter) {
+                        titleMatch = job.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(titleFilter);
+                    }
+                    if (locationFilter) {
+                        locationMatch = job.location.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(locationFilter);
+                    }
+                    if (idFilter) {
+                        idMatch = job.id.toString() === idFilter;
+                    }
+
+                    return titleMatch && locationMatch && idMatch;
                 });
 
                 currentPage = 1;
-                startPage = 1;
+                displayJobs(filteredJobs, currentPage);
+                setupPagination(filteredJobs);
+            }
+
+            function clearFilters() {
+                document.getElementById("title").value = "";
+                document.getElementById("location").value = "";
+                document.getElementById("id").value = "";
+
+                filteredJobs = data;
                 displayJobs(filteredJobs, currentPage);
                 setupPagination(filteredJobs);
             }
@@ -346,8 +328,19 @@ function createPageButton(pageNumber) {
                 return new Date(dateString).toLocaleDateString('pt-BR', options);
             }
 
-            document.getElementById("filters").addEventListener("click", filterJobs);
-            document.getElementById("back-button").addEventListener("click", goBack);
+            document.getElementById("filters").addEventListener("click", function(event) {
+                if (event.target.textContent === "Pesquisar") {
+                    filterJobs();
+                } else if (event.target.textContent === "Limpar") {
+                    clearFilters();
+                }
+            });
+
+            document.getElementById("back-button").addEventListener("click", function () {
+                jobList.style.display = "block";
+                jobDetails.style.display = "none";
+                history.pushState(null, "", window.location.href.split('?')[0]);
+            });
 
             loadJobs();
 

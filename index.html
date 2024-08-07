@@ -160,12 +160,11 @@
         <button onclick="clearFilters()">Limpar</button>
     </div>
     
-    <hr>
-    
     <div id="no-results">Nenhuma vaga encontrada.</div>
     <ul style="list-style: none; padding: 0;" id="job-list"></ul>
     <div id="job-details">
         <h2 id="job-title"></h2>
+        <p id="job-id"></p>
         <p id="job-description"></p>
         <p id="job-location"></p>
         <p id="job-contract"></p>
@@ -274,16 +273,19 @@
 
             function showJobDetails(job) {
                 document.getElementById("job-title").innerText = job.title;
-                document.getElementById("job-description").innerText = job.description;
-                document.getElementById("job-location").innerText = `Localização: ${job.location}`;
-                document.getElementById("job-contract").innerText = `Tipo de Contrato: ${job.contractType}`;
-                document.getElementById("job-requirements").innerText = `Requisitos: ${job.requirements}`;
-                document.getElementById("job-publication").innerText = `Publicado em: ${formatDate(job.publicationDate)}`;
+                document.getElementById("job-id").innerHTML = `<strong>ID da Vaga:</strong> ${job.id}`;
+                document.getElementById("job-description").innerHTML = `<strong>Descrição:</strong> ${job.description}`;
+                document.getElementById("job-location").innerHTML = `<strong>Localização:</strong> ${job.location}`;
+                document.getElementById("job-contract").innerHTML = `<strong>Tipo de Contrato:</strong> ${job.contractType}`;
+                document.getElementById("job-requirements").innerHTML = `<strong>Requisitos:</strong> ${job.requirements}`;
+                document.getElementById("job-publication").innerHTML = `<strong>Publicado em:</strong> ${formatDate(job.publicationDate)}`;
                 document.getElementById("job-url").setAttribute("href", `https://novotemporh.selecty.com.br/vaga/${job.id}/vaga-para-${job.title.toLowerCase().replace(/ /g, '-')}`);
                 jobList.style.display = "none";
                 jobDetails.style.display = "block";
                 history.pushState({ id: job.id }, "", `${window.location.href.split('?')[0]}?id=${job.id}`);
             }
+
+
 
             function filterJobs() {
                 const titleFilter = document.getElementById("title").value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");

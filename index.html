@@ -144,6 +144,12 @@
             color: #555;
             display: none;
         }
+
+        .last-page-button:hover {
+            background-color: #333 !important; /* Cinza escuro */
+            color: #fff !important; /* Texto branco */
+    }
+
     </style>
 </head>
 
@@ -225,6 +231,24 @@
                 });
             }
 
+            function createPaginationButton(text, page) {
+                const button = document.createElement("button");
+                button.innerText = text;
+                button.className = "pagination-button";
+                if (page === currentPage) {
+                    button.classList.add("active");
+                }
+                if (text === "Última") {
+                    button.classList.add("last-page-button");
+                }
+                button.addEventListener("click", () => {
+                    currentPage = page;
+                    displayJobs(filteredJobs, currentPage);
+                    setupPagination(filteredJobs);
+                });
+                return button;
+            }
+
             function setupPagination(jobs) {
                 paginationControls.innerHTML = "";
                 const pageCount = Math.ceil(jobs.length / itemsPerPage);
@@ -235,7 +259,7 @@
                     const firstButton = createPaginationButton("Primeira", 1);
                     paginationControls.appendChild(firstButton);
 
-                    const prevButton = createPaginationButton("🡸", currentPage - 1);
+                    const prevButton = createPaginationButton("←", currentPage - 1);
                     paginationControls.appendChild(prevButton);
                 }
 
@@ -248,27 +272,12 @@
                 }
 
                 if (endPage < pageCount) {
-                    const nextButton = createPaginationButton("🡺", currentPage + 1);
+                    const nextButton = createPaginationButton("→", currentPage + 1);
                     paginationControls.appendChild(nextButton);
 
                     const lastButton = createPaginationButton("Última", pageCount);
                     paginationControls.appendChild(lastButton);
                 }
-            }
-
-            function createPaginationButton(text, page) {
-                const button = document.createElement("button");
-                button.innerText = text;
-                button.className = "pagination-button";
-                if (page === currentPage) {
-                    button.classList.add("active");
-                }
-                button.addEventListener("click", () => {
-                    currentPage = page;
-                    displayJobs(filteredJobs, currentPage);
-                    setupPagination(filteredJobs);
-                });
-                return button;
             }
 
             function showJobDetails(job) {

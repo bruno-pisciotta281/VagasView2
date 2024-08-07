@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 
 <head>
     <meta charset="UTF-8">
@@ -10,10 +10,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
     <title>Pesquisa de Vagas</title>
     <style>
+        /* Estilos gerais para o corpo e fontes */
         body {
             font-family: "Montserrat", sans-serif;
             background-color: #fff;
         }
+
+        /* Estilos para a lista de vagas */
         #job-list li {
             background-color: #fff;
             border-radius: 15px;
@@ -23,10 +26,14 @@
             transition: background-color 0.3s;
             padding-left: 2%;
         }
+
+        /* Estilo para o hover na lista de vagas */
         #job-list li:hover {
             background-color: #00A960;
             color: #ffffff;
         }
+
+        /* Estilos para a visualização detalhada da vaga */
         #job-details {
             display: none;
             border-radius: 15px;
@@ -36,16 +43,21 @@
             background-color: #fff;
             padding: 2%;
         }
+
+        /* Estilos para os filtros */
         #filters label,
         #filters input {
             margin-bottom: 10px;
         }
+
         #filters input[type="text"],
         #filters input[type="number"],
         #filters select,
         #filters button {
             border: none;
         }
+
+        /* Estilo para os botões de filtro */
         #filters button {
             padding: 10px 20px;
             border: none;
@@ -62,10 +74,14 @@
             transition: background-color 0.3s, color 0.3s;
             font-family: "Montserrat", sans-serif;
         }
+
+        /* Estilo para o hover nos botões de filtro */
         #filters button:hover {
             background-color: #474747;
             color: #fff;
         }
+
+        /* Estilo para o botão "Voltar" */
         #back-button {
             padding: 10px 20px;
             border: 1px solid #474747;
@@ -76,22 +92,31 @@
             box-shadow: none;
             background-color: transparent;
         }
+
+        /* Estilo para o hover no botão "Voltar" */
         #back-button:hover {
             background-color: #474747;
             color: #fff;
             box-shadow: none;
         }
+
+        /* Estilos adicionais para filtros */
         #filters {
             margin-bottom: 20px;
         }
+
         input, select, button, label {
             margin-right: 10px;
         }
+
+        /* Estilos para a publicação da vaga */
         #job-publication {
             font-size: 14px;
             margin-top: 10px;
             color: #555;
         }
+
+        /* Estilos para os links e botões na visualização detalhada da vaga */
         #job-url,
         #apply-button {
             padding: 10px 20px;
@@ -108,16 +133,20 @@
             margin-bottom: 10px;
             transition: background-color 0.3s, color 0.3s;
         }
+
         #job-url:hover,
         #apply-button:hover {
             background-color: #00A960;
             color: #ffffff;
             font-weight: bold;
         }
+
+        /* Estilos para a paginação */
         .pagination {
             margin: 20px 0;
             text-align: center;
         }
+
         .pagination button,
         .pagination span {
             margin: 0 5px;
@@ -129,15 +158,19 @@
             cursor: pointer;
             transition: background-color 0.3s, color 0.3s;
         }
+
         .pagination button.active,
         .pagination span.active {
             background-color: #00A960;
             color: #fff;
         }
+
         .pagination button:hover {
             background-color: #00A960;
             color: #fff;
         }
+
+        /* Estilo para a mensagem de "nenhum resultado encontrado" */
         #no-results {
             text-align: center;
             font-size: 18px;
@@ -145,15 +178,17 @@
             display: none;
         }
 
+        /* Estilo para o hover do botão "Última" */
         .last-page-button:hover {
-            background-color: #333 !important; /* Cinza escuro */
-            color: #fff !important; /* Texto branco */
-    }
+            background-color: #333 !important;
+            color: #fff !important;
+        }
 
     </style>
 </head>
 
 <body>
+    <!-- Filtros de pesquisa -->
     <div id="filters">
         <label for="title">Título / Área:</label>
         <input type="text" id="title" placeholder="Exemplo: Engenheiro de Processos ou Marketing">
@@ -165,9 +200,14 @@
         <button onclick="filterJobs()">Pesquisar</button>
         <button onclick="clearFilters()">Limpar</button>
     </div>
-    
+
+    <!-- Mensagem de "nenhum resultado encontrado" -->
     <div id="no-results">Nenhuma vaga encontrada.</div>
+
+    <!-- Lista de vagas -->
     <ul style="list-style: none; padding: 0;" id="job-list"></ul>
+
+    <!-- Visualização detalhada da vaga -->
     <div id="job-details">
         <h2 id="job-title"></h2>
         <p id="job-id"></p>
@@ -179,7 +219,10 @@
         <a href="#" id="job-url" data-id="">Candidatar Agora</a>
         <button id="back-button">Voltar</button>
     </div>
+
+    <!-- Controles de paginação -->
     <div class="pagination" id="pagination-controls"></div>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const jobList = document.getElementById("job-list");
@@ -189,16 +232,17 @@
             let data = [];
             let filteredJobs = [];
             let currentPage = 1;
-            const itemsPerPage = 10; // Número de itens por página
-            const maxPageButtons = 5; // Número máximo de botões de página a serem exibidos
+            const itemsPerPage = 10;
+            const maxPageButtons = 5;
 
+            // Função para carregar as vagas do servidor
             function loadJobs() {
                 fetch("https://novotemporh.selecty.com.br/jobfeed/index.php?token=68d44a-11e5-1cff68-ad54-163f244a87781&portal=novotemporh")
                     .then(response => response.json())
                     .then(jobData => {
                         data = jobData;
-                        filteredJobs = data; // Inicialize filteredJobs com todos os dados
-                        data.sort((a, b) => new Date(b.publicationDate) - new Date(a.publicationDate));
+                        filteredJobs = data;
+                        data.sort((a, b) => new Date(b.publicationDate) - new Date(a.publicationDate)); // Ordena por data de publicação
                         displayJobs(data, currentPage);
                         setupPagination(data);
                     })
@@ -207,6 +251,7 @@
                     });
             }
 
+            // Função para exibir as vagas na página atual
             function displayJobs(jobs, page) {
                 jobList.innerHTML = "";
                 const startIndex = (page - 1) * itemsPerPage;
@@ -231,6 +276,7 @@
                 });
             }
 
+            // Função para criar os botões de paginação
             function createPaginationButton(text, page) {
                 const button = document.createElement("button");
                 button.innerText = text;
@@ -249,12 +295,14 @@
                 return button;
             }
 
+            // Função para configurar a paginação
             function setupPagination(jobs) {
                 paginationControls.innerHTML = "";
                 const pageCount = Math.ceil(jobs.length / itemsPerPage);
 
-                if (pageCount <= 1) return; // Se houver apenas uma página, não exiba a paginação
+                if (pageCount <= 1) return;
 
+                // Botões "Primeira" e "Anterior"
                 if (currentPage > 1) {
                     const firstButton = createPaginationButton("Primeira", 1);
                     paginationControls.appendChild(firstButton);
@@ -263,6 +311,7 @@
                     paginationControls.appendChild(prevButton);
                 }
 
+                // Botões de número de página
                 const startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
                 const endPage = Math.min(pageCount, startPage + maxPageButtons - 1);
 
@@ -271,6 +320,7 @@
                     paginationControls.appendChild(pageButton);
                 }
 
+                // Botões "Próxima" e "Última"
                 if (endPage < pageCount) {
                     const nextButton = createPaginationButton("→", currentPage + 1);
                     paginationControls.appendChild(nextButton);
@@ -280,6 +330,7 @@
                 }
             }
 
+            // Função para exibir os detalhes da vaga
             function showJobDetails(job) {
                 document.getElementById("job-title").innerText = job.title;
                 document.getElementById("job-id").innerHTML = `<strong>ID da Vaga:</strong> ${job.id}`;
@@ -294,8 +345,7 @@
                 history.pushState({ id: job.id }, "", `${window.location.href.split('?')[0]}?id=${job.id}`);
             }
 
-
-
+            // Função para filtrar as vagas com base nos filtros
             function filterJobs() {
                 const titleFilter = document.getElementById("title").value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 const locationFilter = document.getElementById("location").value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -324,6 +374,7 @@
                 setupPagination(filteredJobs);
             }
 
+            // Função para limpar os filtros
             function clearFilters() {
                 document.getElementById("title").value = "";
                 document.getElementById("location").value = "";
@@ -334,11 +385,13 @@
                 setupPagination(filteredJobs);
             }
 
+            // Função para formatar a data de publicação
             function formatDate(dateString) {
                 const options = { day: 'numeric', month: 'long', year: 'numeric' };
                 return new Date(dateString).toLocaleDateString('pt-BR', options);
             }
 
+            // Event listeners para os botões de filtro
             document.getElementById("filters").addEventListener("click", function(event) {
                 if (event.target.textContent === "Pesquisar") {
                     filterJobs();
@@ -347,14 +400,17 @@
                 }
             });
 
+            // Event listener para o botão "Voltar"
             document.getElementById("back-button").addEventListener("click", function () {
                 jobList.style.display = "block";
                 jobDetails.style.display = "none";
                 history.pushState(null, "", window.location.href.split('?')[0]);
             });
 
+            // Carrega as vagas ao carregar a página
             loadJobs();
 
+            // Configura o comportamento do botão "Voltar" do navegador
             window.onpopstate = function (event) {
                 if (event.state && event.state.id) {
                     const job = data.find(job => job.id === event.state.id);

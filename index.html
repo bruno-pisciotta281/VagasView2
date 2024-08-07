@@ -100,6 +100,32 @@
             box-shadow: none;
         }
 
+       /* Estilo para o botão "Copiar URL" */
+        #copy-url-button {
+            background-color: #00A960;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Estilo para o ícone dentro do botão */
+        #copy-url-button i {
+            margin-right: 5px;
+        }
+
+        #copy-url-button:hover {
+            background-color: #474747;
+            color: #ffffff;
+        }
+
+
         /* Estilos adicionais para filtros */
         #filters {
             margin-bottom: 20px;
@@ -217,8 +243,12 @@
         <p id="job-requirements"></p>
         <p id="job-publication"></p>
         <a href="#" id="job-url" data-id="">Candidatar Agora</a>
+        <button id="copy-url-button">
+            <i class="fa fa-copy"></i>
+        </button>
         <button id="back-button">Voltar</button>
     </div>
+
 
     <!-- Controles de paginação -->
     <div class="pagination" id="pagination-controls"></div>
@@ -235,6 +265,12 @@
             const itemsPerPage = 10;
             const maxPageButtons = 5;
 
+            // Função para obter o parâmetro `id` da URL
+            function getQueryParam(param) {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get(param);
+            }
+
             // Função para carregar as vagas do servidor
             function loadJobs() {
                 fetch("https://novotemporh.selecty.com.br/jobfeed/index.php?token=68d44a-11e5-1cff68-ad54-163f244a87781&portal=novotemporh")
@@ -245,6 +281,15 @@
                         data.sort((a, b) => new Date(b.publicationDate) - new Date(a.publicationDate)); // Ordena por data de publicação
                         displayJobs(data, currentPage);
                         setupPagination(data);
+
+                        // Verifica se há um `id` na URL e exibe os detalhes se necessário
+                        const jobId = getQueryParam("id");
+                        if (jobId) {
+                            const job = data.find(job => job.id.toString() === jobId);
+                            if (job) {
+                                showJobDetails(job);
+                            }
+                        }
                     })
                     .catch(error => {
                         console.error("Erro ao carregar vagas: " + error);
@@ -385,6 +430,20 @@
                 setupPagination(filteredJobs);
             }
 
+            // Função para copiar a URL da página para a área de transferência
+                function copyToClipboard() {
+                    const url = window.location.href;
+                    navigator.clipboard.writeText(url).then(() => {
+                        alert("URL copiada para a área de transferência!");
+                    }).catch(err => {
+                        console.error("Erro ao copiar URL: ", err);
+                    });
+                }
+
+                // Adiciona o event listener ao botão "Copiar URL"
+                document.getElementById("copy-url-button").addEventListener("click", copyToClipboard);
+
+
             // Função para formatar a data de publicação
             function formatDate(dateString) {
                 const options = { day: 'numeric', month: 'long', year: 'numeric' };
@@ -414,7 +473,12 @@
             window.onpopstate = function (event) {
                 if (event.state && event.state.id) {
                     const job = data.find(job => job.id === event.state.id);
-                    showJobDetails(job);
+                    if (job) {
+                        showJobDetails(job);
+                    } else {
+                        jobList.style.display = "block";
+                        jobDetails.style.display = "none";
+                    }
                 } else {
                     jobList.style.display = "block";
                     jobDetails.style.display = "none";

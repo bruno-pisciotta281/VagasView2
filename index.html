@@ -399,6 +399,7 @@
                 document.getElementById("job-url").setAttribute("href", `https://novotemporh.selecty.com.br/vaga/${job.id}/vaga-para-${job.title.toLowerCase().replace(/ /g, '-')}`);
                 jobList.style.display = "none";
                 jobDetails.style.display = "block";
+                document.getElementById("filters").style.display = "none"; // Oculta os filtros 
                 paginationControls.style.display = "none"; // Esconde a paginação
                 history.pushState({ id: job.id }, "", `${window.location.href.split('?')[0]}?id=${job.id}`);
             }
@@ -477,6 +478,7 @@
             document.getElementById("back-button").addEventListener("click", function () {
             jobList.style.display = "block";
             jobDetails.style.display = "none";
+            document.getElementById("filters").style.display = "block"; // Mostra os filtros
             paginationControls.style.display = "block"; // Mostra a paginação
             history.pushState(null, "", window.location.href.split('?')[0]);
         });
@@ -492,6 +494,7 @@
                     showJobDetails(job);
                 } else {
                     jobList.style.display = "block";
+                    document.getElementById("filters").style.display = "block"; // Mostra os filtros
                     jobDetails.style.display = "none";
                     paginationControls.style.display = "block"; // Mostra a paginação
                 }
